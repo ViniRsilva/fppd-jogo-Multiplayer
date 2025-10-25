@@ -1,0 +1,15 @@
+# Ignora tudo no diretório .idea
+.idea/*
+
+# Mas NÃO ignore estes arquivos (permite compartilhar configurações com a equipe)
+!.idea/runConfigurations/
+!.idea/codeStyles/
+!.idea/dbnavigator.xml
+!.idea/sqldialects.xml
+!.idea/vcs.xml
+
+# Ignora arquivos de workspace que são sempre específicos do usuário
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+.idea/dictionaries/
