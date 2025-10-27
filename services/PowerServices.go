@@ -1,1 +1,90 @@
 package services
+
+import (
+	"errors"
+	"fppd-jogo-Multiplayer/models"
+	"sync"
+)
+
+var PowerNotFound = errors.New("poder não encontrado")
+
+type PowerService struct {
+	mu          sync.RWMutex
+	allPowers   map[int]*models.Power
+	nextPowerID int
+}
+
+func NewPowerService() *PowerService {
+	return &PowerService{
+		allPowers:   make(map[int]*models.Power),
+		nextPowerID: 1,
+	}
+}
+
+/*
+Cria um novo poder no jogo
+*/
+func (service *PowerService) CreatePower(posX, posY int, reply *bool) error {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	newPower := &models.Power{
+		ID: service.nextPowerID,
+		X:  posX,
+		Y:  posY,
+	}
+	service.nextPowerID++
+	service.allPowers[newPower.ID] = newPower
+
+	*reply = true
+	return nil
+}
+
+/*
+Devolve o poder identificado pelo ID
+*/
+func (service *PowerService) FindPowerByID(id int, reply *models.Power) error {
+	service.mu.RLock()
+	defer service.mu.RUnlock()
+
+	power, found := service.allPowers[id]
+	if !found {
+		return PowerNotFound
+	}
+
+	*reply = *power
+	return nil
+}
+
+/*
+Deleta o poder
+*/
+func (service *PowerService) DeletePower(ID int, res *bool) error {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	_, found := service.allPowers[ID]
+	if !found {
+		return PowerNotFound
+	}
+
+	delete(service.allPowers, ID)
+	*res = true
+	return nil
+}
+
+/*
+Lista todos os poderes ativos
+*/
+func (service *PowerService) ListAllPowers(dummy int, reply *[]models.Power) error {
+	service.mu.RLock()
+	defer service.mu.RUnlock()
+
+	powers := make([]models.Power, 0, len(service.allPowers))
+	for _, power := range service.allPowers {
+		powers = append(powers, *power)
+	}
+
+	*reply = powers
+	return nil
+}
