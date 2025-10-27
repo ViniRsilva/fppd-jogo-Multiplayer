@@ -24,30 +24,30 @@ func NewPowerService() *PowerService {
 /*
 Cria um novo poder no jogo
 */
-func (service *PowerService) CreatePower(posX, posY int, reply *bool) error {
+func (service *PowerService) CreatePower(args *CreatePowerArgs, reply *models.Power) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
 	newPower := &models.Power{
 		ID: service.nextPowerID,
-		X:  posX,
-		Y:  posY,
+		X:  args.X,
+		Y:  args.Y,
 	}
 	service.nextPowerID++
 	service.allPowers[newPower.ID] = newPower
 
-	*reply = true
+	*reply = *newPower
 	return nil
 }
 
 /*
 Devolve o poder identificado pelo ID
 */
-func (service *PowerService) FindPowerByID(id int, reply *models.Power) error {
+func (service *PowerService) FindPowerByID(args *FindPowerByIdArgs, reply *models.Power) error {
 	service.mu.RLock()
 	defer service.mu.RUnlock()
 
-	power, found := service.allPowers[id]
+	power, found := service.allPowers[args.ID]
 	if !found {
 		return PowerNotFound
 	}
@@ -59,24 +59,24 @@ func (service *PowerService) FindPowerByID(id int, reply *models.Power) error {
 /*
 Deleta o poder
 */
-func (service *PowerService) DeletePower(ID int, res *bool) error {
+func (service *PowerService) DeletePower(args *DeletePowerArgs, reply *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	_, found := service.allPowers[ID]
+	_, found := service.allPowers[args.ID]
 	if !found {
 		return PowerNotFound
 	}
 
-	delete(service.allPowers, ID)
-	*res = true
+	delete(service.allPowers, args.ID)
+	*reply = true
 	return nil
 }
 
 /*
 Lista todos os poderes ativos
 */
-func (service *PowerService) ListAllPowers(dummy int, reply *[]models.Power) error {
+func (service *PowerService) ListAllPowers(args *ListPowersArgs, reply *[]models.Power) error {
 	service.mu.RLock()
 	defer service.mu.RUnlock()
 
@@ -87,4 +87,24 @@ func (service *PowerService) ListAllPowers(dummy int, reply *[]models.Power) err
 
 	*reply = powers
 	return nil
+}
+
+/*
+Tipos auxiliares para chamadas RPC
+*/
+type CreatePowerArgs struct {
+	X int
+	Y int
+}
+
+type FindPowerByIdArgs struct {
+	ID int
+}
+
+type DeletePowerArgs struct {
+	ID int
+}
+
+type ListPowersArgs struct {
+
 }
