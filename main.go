@@ -1,19 +1,16 @@
-package fppd_jogo_Multiplayer
+package main
 
 import (
 	"log"
 	"net"
 	"net/http"
 	"net/rpc"
-	"fppd-jogo-Multiplayer/game"
 )
 
 func main() {
 	//Inicializar um objeto do tipo dos metodos exportaveis
-	g := game.NewGame()
+	g := NewGame()
 
-
-	  
 	/*
 		Para que seja possivel acessar os metodos do objeto
 		eh necessario registra-lo utilizando a biblioteca rpc.
@@ -33,7 +30,7 @@ func main() {
 	rpc.HandleHTTP()
 
 	/*
-		Inicializa um processo que escuta toda comunicacao em 
+		Inicializa um processo que escuta toda comunicacao em
 		determinada porta, seguindo o protocolo tcp
 	*/
 	listener, err := net.Listen("tcp", ":4040")
