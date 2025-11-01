@@ -24,7 +24,7 @@ func NewCoinService() *CoinService {
 /*
 Cria uma nova moeda no jogo
 */
-func (service *CoinService) createCoin(posX, posY int, reply *bool) error {
+func (service *CoinService) CreateCoin(posX, posY int, reply *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
@@ -59,7 +59,7 @@ func (service *CoinService) FindCoinByID(id int, reply *models.Coin) error {
 /*
 Deleta a moeda
 */
-func (service *CoinService) deleteCoin(ID int, res *bool) error {
+func (service *CoinService) DeleteCoin(ID int, res *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
