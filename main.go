@@ -11,17 +11,6 @@ func main() {
 	//Inicializar um objeto do tipo dos metodos exportaveis
 	g := NewGame()
 
-	/*
-		Para que seja possivel acessar os metodos do objeto
-		eh necessario registra-lo utilizando a biblioteca rpc.
-		O registro gera um erro, sendo nil o caso em que o registro
-		foi um sucesso.
-	*/
-	err := rpc.Register(g)
-	if err != nil {
-		log.Fatal("Error registering Game", err)
-	}
-
 	rpc.RegisterName("CoinService", g.CoinService())
 	rpc.RegisterName("MonsterService", g.MonsterService())
 	rpc.RegisterName("PlayerService", g.PlayerService())
