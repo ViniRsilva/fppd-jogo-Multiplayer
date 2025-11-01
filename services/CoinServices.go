@@ -8,6 +8,11 @@ import (
 
 var CoinNotFound = errors.New("moeda não encontrada")
 
+type CoinServiceArgs struct {
+	PosX int
+	PosY int
+}
+
 type CoinService struct {
 	mu         sync.RWMutex
 	allCoins   map[int]*models.Coin
@@ -24,14 +29,14 @@ func NewCoinService() *CoinService {
 /*
 Cria uma nova moeda no jogo
 */
-func (service *CoinService) CreateCoin(posX, posY int, reply *bool) error {
+func (service *CoinService) CreateCoin(args *CoinServiceArgs, reply *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
 	newCoin := &models.Coin{
 		ID: service.nextCoinID,
-		X:  posX,
-		Y:  posY,
+		X:  args.PosX,
+		Y:  args.PosY,
 	}
 	service.nextCoinID++
 	service.allCoins[newCoin.ID] = newCoin
@@ -59,16 +64,16 @@ func (service *CoinService) FindCoinByID(id int, reply *models.Coin) error {
 /*
 Deleta a moeda
 */
-func (service *CoinService) DeleteCoin(ID int, res *bool) error {
+func (service *CoinService) DeleteCoin(id int, res *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
-	_, found := service.allCoins[ID]
+	_, found := service.allCoins[id]
 	if !found {
 		return CoinNotFound
 	}
 
-	delete(service.allCoins, ID)
+	delete(service.allCoins, id)
 	*res = true
 	return nil
 }
