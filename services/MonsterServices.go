@@ -12,6 +12,7 @@ type MonsterService struct {
 	mu            sync.RWMutex
 	allMonsters   map[int]*models.Monster
 	nextMonsterID int
+	lastRequestID map[int]bool
 }
 
 func NewMonsterService() *MonsterService {
@@ -22,7 +23,7 @@ func NewMonsterService() *MonsterService {
 }
 
 // Create a new monster
-func (service *MonsterService) CreateMonster(args *CreateMonsterArgs, reply *bool) error {
+func (service *MonsterService) CreateMonster(args *MonsterServiceArgs, reply *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
@@ -33,8 +34,8 @@ func (service *MonsterService) CreateMonster(args *CreateMonsterArgs, reply *boo
 
 	newMonster := &models.Monster{
 		ID: service.nextMonsterID,
-		X:  args.X,
-		Y:  args.Y,
+		X:  args.PosX,
+		Y:  args.PosY,
 	}
 	service.nextMonsterID++
 	service.allMonsters[newMonster.ID] = newMonster
@@ -44,25 +45,28 @@ func (service *MonsterService) CreateMonster(args *CreateMonsterArgs, reply *boo
 	return nil
 }
 
-// Delete monster by ID
-func (service *MonsterService) DeleteMonster(args *DeleteMonsterArgs, reply *bool) error {
+// Delete monster by position
+func (service *MonsterService) DeleteMonsterByPosition(args *MonsterServiceArgs, res *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
 	if service.lastRequestID[args.RequestID] {
-		*reply = models.Power{} 
+		*res = true
 		return nil
 	}
 
-	_, found := service.allMonsters[args.ID]
-	if !found {
-		return MonsterNotFound
+	// procura o mosntro pela posição
+	for id, monster := range service.allMonsters {
+		if monster.X == args.PosX && monster.Y == args.PosY {
+			delete(service.allMonsters, id)
+			service.lastRequestID[args.RequestID] = true
+			*res = true
+			return nil
+		}
 	}
 
-	delete(service.allMonsters, args.ID)
-	service.lastRequestID[args.RequestID] = true
-	*reply = true
-	return nil
+	// se não encontrou nenhuma moeda na posição
+	return CoinNotFound
 }
 
 // Delete all monsters (When player get a power)
@@ -108,12 +112,6 @@ func (service *MonsterService) ListAllMonsters(args *ListMonstersArgs, reply *[]
 }
 
 // arguments structs
-type CreateMonsterArgs struct {
-	X int
-	Y int
-	RequestID int
-}
-
 type FindMonsterByIdArgs struct {
 	ID int
 }
@@ -121,10 +119,12 @@ type FindMonsterByIdArgs struct {
 type ListMonstersArgs struct {
 }
 
-type DeleteMonsterArgs struct {
-	ID int
-	RequestID int
-}
 
 type DeleteAllMonsterArgs struct {
+}
+
+type MonsterServiceArgs struct {
+	PosX int
+	PosY int
+	RequestID int
 }
