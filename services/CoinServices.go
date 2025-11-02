@@ -77,3 +77,19 @@ func (service *CoinService) DeleteCoin(id int, res *bool) error {
 	*res = true
 	return nil
 }
+
+/*
+Lista todas as moedas ativas
+*/
+func (service *CoinService) ListAllCoins(args *struct{}, reply *[]models.Coin) error {
+	service.mu.RLock()
+	defer service.mu.RUnlock()
+
+	coins := make([]models.Coin, 0, len(service.allCoins))
+	for _, coin := range service.allCoins {
+		coins = append(coins, *coin)
+	}
+
+	*reply = coins
+	return nil
+}

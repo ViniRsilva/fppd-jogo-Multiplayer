@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fppd-jogo-Multiplayer/models"
+	"log"
 	"sync"
 )
 
@@ -79,19 +80,21 @@ func (service *PlayerService) DeletePlayer(args *DeleteArgs, reply *bool) error 
 /*
 Move jogador alterando sua posição
 */
-func (service *PlayerService) MovePlayer(args *MoveArgs, reply *models.Player) error {
+func (service *PlayerService) MovePlayer(args *MoveArgs, reply *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
+
+	log.Printf("MovePlayer: ID=%d -> (%d,%d) | totalPlayers=%d", args.ID, args.X, args.Y, len(service.allPlayers))
 
 	player, found := service.allPlayers[args.ID]
 	if !found {
 		return PlayerNotFound
 	}
 
-	player.X += args.DX
-	player.Y += args.DY
+	player.X = args.X
+	player.Y = args.Y
 
-	*reply = *player
+	*reply = true
 	return nil
 }
 
@@ -130,13 +133,29 @@ func (service *PlayerService) SetBoost(args *BoostArgs, reply *models.Player) er
 }
 
 /*
+Lista todos os jogadores ativos
+*/
+func (service *PlayerService) ListAllPlayers(args *struct{}, reply *[]models.Player) error {
+	service.mu.RLock()
+	defer service.mu.RUnlock()
+
+	players := make([]models.Player, 0, len(service.allPlayers))
+	for _, player := range service.allPlayers {
+		players = append(players, *player)
+	}
+
+	*reply = players
+	return nil
+}
+
+/*
 Tipos auxiliares para chamadas RPC
 */
 
 type MoveArgs struct {
 	ID int
-	DX int
-	DY int
+	X  int
+	Y  int
 }
 
 type ScoreArgs struct {
