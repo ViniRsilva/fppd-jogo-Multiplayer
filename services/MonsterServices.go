@@ -66,7 +66,7 @@ func (service *MonsterService) DeleteMonsterByPosition(args *MonsterServiceArgs,
 	}
 
 	// se não encontrou nenhuma moeda na posição
-	return CoinNotFound
+	return MonsterNotFound
 }
 
 // Delete all monsters (When player get a power)

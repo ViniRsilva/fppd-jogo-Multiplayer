@@ -12,6 +12,7 @@ type PowerService struct {
 	mu          sync.RWMutex
 	allPowers   map[int]*models.Power
 	nextPowerID int
+	lastRequestID map[int]bool
 }
 
 func NewPowerService() *PowerService {
@@ -24,26 +25,50 @@ func NewPowerService() *PowerService {
 /*
 Cria um novo poder no jogo
 */
-func (service *PowerService) CreatePower(args *CreatePowerArgs, reply *models.Power) error {
+func (service *PowerService) CreatePower(args *PowerServiceArgs, reply *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
 	if service.lastRequestID[args.RequestID] {
-		*reply = models.Power{} 
+		*reply = true
 		return nil
 	}
 
 	newPower := &models.Power{
 		ID: service.nextPowerID,
-		X:  args.X,
-		Y:  args.Y,
+		X:  args.PosX,
+		Y:  args.PosY,
 	}
 	service.nextPowerID++
 	service.allPowers[newPower.ID] = newPower
 	service.lastRequestID[args.RequestID] = true
 
-	*reply = *newPower
+	*reply = true
 	return nil
+}
+
+// Delete power by position
+func (service *PowerService) DeletePowerByPosition(args *PowerServiceArgs, res *bool) error {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	if service.lastRequestID[args.RequestID] {
+		*res = true
+		return nil
+	}
+
+	// procura o mosntro pela posição
+	for id, power := range service.allPowers {
+		if power.X == args.PosX && power.Y == args.PosY {
+			delete(service.allPowers, id)
+			service.lastRequestID[args.RequestID] = true
+			*res = true
+			return nil
+		}
+	}
+
+	// se não encontrou nenhuma moeda na posição
+	return PowerNotFound
 }
 
 /*
@@ -59,29 +84,6 @@ func (service *PowerService) FindPowerByID(args *FindPowerByIdArgs, reply *model
 	}
 
 	*reply = *power
-	return nil
-}
-
-/*
-Deleta o poder
-*/
-func (service *PowerService) DeletePower(args *DeletePowerArgs, reply *bool) error {
-	service.mu.Lock()
-	defer service.mu.Unlock()
-
-	if service.lastRequestID[args.RequestID] {
-		*reply = models.Power{} 
-		return nil
-	}
-
-	_, found := service.allPowers[args.ID]
-	if !found {
-		return PowerNotFound
-	}
-
-	delete(service.allPowers, args.ID)
-	service.lastRequestID[args.RequestID] = true
-	*reply = true
 	return nil
 }
 
@@ -120,4 +122,11 @@ type DeletePowerArgs struct {
 }
 
 type ListPowersArgs struct {
+}
+
+
+type PowerServiceArgs struct {
+	PosX int
+	PosY int
+	RequestID int
 }
