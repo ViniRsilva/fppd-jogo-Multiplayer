@@ -67,7 +67,7 @@ func (service *PowerService) DeletePowerByPosition(args *PowerServiceArgs, res *
 		}
 	}
 
-	// se não encontrou nenhuma moeda na posição
+	// se não encontrou nenhuma poder na posição
 	return PowerNotFound
 }
 
