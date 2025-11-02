@@ -19,6 +19,7 @@ func NewMonsterService() *MonsterService {
 	return &MonsterService{
 		allMonsters:   make(map[int]*models.Monster),
 		nextMonsterID: 1,
+		lastRequestID: make(map[int]bool),
 	}
 }
 

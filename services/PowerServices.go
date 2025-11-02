@@ -19,6 +19,7 @@ func NewPowerService() *PowerService {
 	return &PowerService{
 		allPowers:   make(map[int]*models.Power),
 		nextPowerID: 1,
+		lastRequestID: make(map[int]bool),
 	}
 }
 
