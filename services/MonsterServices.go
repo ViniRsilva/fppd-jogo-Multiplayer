@@ -65,7 +65,7 @@ func (service *MonsterService) DeleteMonsterByPosition(args *MonsterServiceArgs,
 		}
 	}
 
-	// se não encontrou nenhuma moeda na posição
+	// se não encontrou nenhuma monstro na posição
 	return MonsterNotFound
 }
 
