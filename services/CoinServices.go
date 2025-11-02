@@ -11,18 +11,21 @@ var CoinNotFound = errors.New("moeda não encontrada")
 type CoinServiceArgs struct {
 	PosX int
 	PosY int
+	RequestID
 }
 
 type CoinService struct {
 	mu         sync.RWMutex
 	allCoins   map[int]*models.Coin
 	nextCoinID int
+	lastRequestID map[int]bool
 }
 
 func NewCoinService() *CoinService {
 	return &CoinService{
 		allCoins:   make(map[int]*models.Coin),
 		nextCoinID: 1,
+		lastRequestID make(map[int]bool),
 	}
 }
 
@@ -30,10 +33,16 @@ func (service *CoinService) DeleteCoinByPosition(args *CoinServiceArgs, res *boo
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	if service.lastRequestID[args.RequestID] {
+		*res = true
+		return nil
+	}
+
 	// procura a moeda pela posição
 	for id, coin := range service.allCoins {
 		if coin.X == args.PosX && coin.Y == args.PosY {
 			delete(service.allCoins, id)
+			service.lastRequestID[args.RequestID] = true
 			*res = true
 			return nil
 		}
@@ -50,6 +59,11 @@ func (service *CoinService) CreateCoin(args *CoinServiceArgs, reply *bool) error
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	if service.lastRequestID[args.RequestID] {
+		*reply = true
+		return nil
+	}
+
 	newCoin := &models.Coin{
 		ID: service.nextCoinID,
 		X:  args.PosX,
@@ -57,6 +71,7 @@ func (service *CoinService) CreateCoin(args *CoinServiceArgs, reply *bool) error
 	}
 	service.nextCoinID++
 	service.allCoins[newCoin.ID] = newCoin
+	service.lastRequestID[args.RequestID] = true
 
 	*reply = true
 	return nil

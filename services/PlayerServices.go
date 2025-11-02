@@ -67,12 +67,18 @@ func (service *PlayerService) DeletePlayer(args *DeleteArgs, reply *bool) error 
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	if service.lastRequestID[args.RequestID] {
+		*reply = true
+		return nil
+	}
+
 	_, found := service.allPlayers[args.ID]
 	if !found {
 		return PlayerNotFound
 	}
 
 	delete(service.allPlayers, args.ID)
+	service.lastRequestID[args.RequestID] = true
 	*reply = true
 	return nil
 }
@@ -83,6 +89,11 @@ Move jogador alterando sua posição
 func (service *PlayerService) MovePlayer(args *MoveArgs, reply *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
+	
+	if service.lastRequestID[args.RequestID] {
+		*reply = true
+		return nil
+	}
 
 	log.Printf("MovePlayer: ID=%d -> (%d,%d) | totalPlayers=%d", args.ID, args.X, args.Y, len(service.allPlayers))
 
@@ -93,7 +104,7 @@ func (service *PlayerService) MovePlayer(args *MoveArgs, reply *bool) error {
 
 	player.X = args.X
 	player.Y = args.Y
-
+	service.lastRequestID[args.RequestID] = true
 	*reply = true
 	return nil
 }
@@ -156,6 +167,7 @@ type MoveArgs struct {
 	ID int
 	X  int
 	Y  int
+	RequestID int
 }
 
 type ScoreArgs struct {
@@ -179,4 +191,5 @@ type FindPlayerByIdArgs struct {
 
 type DeleteArgs struct {
 	ID int
+	RequestID int
 }

@@ -26,6 +26,11 @@ func (service *MonsterService) CreateMonster(args *CreateMonsterArgs, reply *boo
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	if service.lastRequestID[args.RequestID] {
+		*reply = true
+		return nil
+	}
+
 	newMonster := &models.Monster{
 		ID: service.nextMonsterID,
 		X:  args.X,
@@ -33,6 +38,7 @@ func (service *MonsterService) CreateMonster(args *CreateMonsterArgs, reply *boo
 	}
 	service.nextMonsterID++
 	service.allMonsters[newMonster.ID] = newMonster
+	service.lastRequestID[args.RequestID] = true
 
 	*reply = true
 	return nil
@@ -43,12 +49,18 @@ func (service *MonsterService) DeleteMonster(args *DeleteMonsterArgs, reply *boo
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	if service.lastRequestID[args.RequestID] {
+		*reply = models.Power{} 
+		return nil
+	}
+
 	_, found := service.allMonsters[args.ID]
 	if !found {
 		return MonsterNotFound
 	}
 
 	delete(service.allMonsters, args.ID)
+	service.lastRequestID[args.RequestID] = true
 	*reply = true
 	return nil
 }
@@ -99,6 +111,7 @@ func (service *MonsterService) ListAllMonsters(args *ListMonstersArgs, reply *[]
 type CreateMonsterArgs struct {
 	X int
 	Y int
+	RequestID int
 }
 
 type FindMonsterByIdArgs struct {
@@ -110,6 +123,7 @@ type ListMonstersArgs struct {
 
 type DeleteMonsterArgs struct {
 	ID int
+	RequestID int
 }
 
 type DeleteAllMonsterArgs struct {

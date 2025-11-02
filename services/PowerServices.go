@@ -28,6 +28,11 @@ func (service *PowerService) CreatePower(args *CreatePowerArgs, reply *models.Po
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	if service.lastRequestID[args.RequestID] {
+		*reply = models.Power{} 
+		return nil
+	}
+
 	newPower := &models.Power{
 		ID: service.nextPowerID,
 		X:  args.X,
@@ -35,6 +40,7 @@ func (service *PowerService) CreatePower(args *CreatePowerArgs, reply *models.Po
 	}
 	service.nextPowerID++
 	service.allPowers[newPower.ID] = newPower
+	service.lastRequestID[args.RequestID] = true
 
 	*reply = *newPower
 	return nil
@@ -63,12 +69,18 @@ func (service *PowerService) DeletePower(args *DeletePowerArgs, reply *bool) err
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	if service.lastRequestID[args.RequestID] {
+		*reply = models.Power{} 
+		return nil
+	}
+
 	_, found := service.allPowers[args.ID]
 	if !found {
 		return PowerNotFound
 	}
 
 	delete(service.allPowers, args.ID)
+	service.lastRequestID[args.RequestID] = true
 	*reply = true
 	return nil
 }
@@ -95,6 +107,7 @@ Tipos auxiliares para chamadas RPC
 type CreatePowerArgs struct {
 	X int
 	Y int
+	RequestID int
 }
 
 type FindPowerByIdArgs struct {
@@ -103,6 +116,7 @@ type FindPowerByIdArgs struct {
 
 type DeletePowerArgs struct {
 	ID int
+	RequestID int
 }
 
 type ListPowersArgs struct {
