@@ -22,7 +22,7 @@ func main() {
 		Inicializa um processo que escuta toda comunicacao em
 		determinada porta, seguindo o protocolo tcp
 	*/
-	listener, err := net.Listen("tcp", "0.0.0.0:4040")
+	listener, err := net.Listen("tcp4", ":4040")
 
 	if err != nil {
 		log.Fatal("Listener error ", err)
