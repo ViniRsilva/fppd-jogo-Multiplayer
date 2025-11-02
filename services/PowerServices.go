@@ -69,12 +69,18 @@ func (service *PowerService) DeletePower(args *DeletePowerArgs, reply *bool) err
 	service.mu.Lock()
 	defer service.mu.Unlock()
 
+	if service.lastRequestID[args.RequestID] {
+		*reply = models.Power{} 
+		return nil
+	}
+
 	_, found := service.allPowers[args.ID]
 	if !found {
 		return PowerNotFound
 	}
 
 	delete(service.allPowers, args.ID)
+	service.lastRequestID[args.RequestID] = true
 	*reply = true
 	return nil
 }
@@ -110,6 +116,7 @@ type FindPowerByIdArgs struct {
 
 type DeletePowerArgs struct {
 	ID int
+	RequestID int
 }
 
 type ListPowersArgs struct {
