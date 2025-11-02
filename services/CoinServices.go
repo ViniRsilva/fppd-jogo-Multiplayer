@@ -26,6 +26,23 @@ func NewCoinService() *CoinService {
 	}
 }
 
+func (service *CoinService) DeleteCoinByPosition(args *CoinServiceArgs, res *bool) error {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	// procura a moeda pela posição
+	for id, coin := range service.allCoins {
+		if coin.X == args.PosX && coin.Y == args.PosY {
+			delete(service.allCoins, id)
+			*res = true
+			return nil
+		}
+	}
+
+	// se não encontrou nenhuma moeda na posição
+	return CoinNotFound
+}
+
 /*
 Cria uma nova moeda no jogo
 */
