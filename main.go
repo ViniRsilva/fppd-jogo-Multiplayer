@@ -1,79 +1,40 @@
-// main.go - Loop principal do jogo
 package main
 
 import (
-	"os"
-	"time"
+	"log"
+	"net"
+	"net/http"
+	"net/rpc"
 )
 
-var Score = 0
-
 func main() {
-	// Inicializa a interface (termbox)
-	interfaceIniciar()
-	defer interfaceFinalizar()
+	//Inicializar um objeto do tipo dos metodos exportaveis
+	g := NewGame()
 
-	// Usa "mapa.txt" como arquivo padrão ou lê o primeiro argumento
-	mapaFile := "mapa.txt"
-	if len(os.Args) > 1 {
-		mapaFile = os.Args[1]
+	rpc.RegisterName("CoinService", g.CoinService())
+	rpc.RegisterName("MonsterService", g.MonsterService())
+	rpc.RegisterName("PlayerService", g.PlayerService())
+	rpc.RegisterName("PowerService", g.PowerService())
+	//Permite que a biblioteca utilize http para comunicacao
+	rpc.HandleHTTP()
+
+	/*
+		Inicializa um processo que escuta toda comunicacao em
+		determinada porta, seguindo o protocolo tcp
+	*/
+	listener, err := net.Listen("tcp4", ":4040")
+
+	if err != nil {
+		log.Fatal("Listener error ", err)
 	}
+	log.Printf("Serving rpc on port: %d", 4040)
 
-	// Inicializa o jogo
-	jogo := jogoNovo()
-	if err := jogoCarregarMapa(mapaFile, &jogo); err != nil {
-		panic(err)
-	}
-
-	coinRespawnChannel := make(chan bool)
-	monsterSpawnChannel := make(chan bool)
-	powerSpawnChannel := make(chan bool, 1)
-
-	// Go routine para spawn contínuo de moedas,
-	// com timeout indicado no parâmetro da função
-	go func() {
-		for range coinRespawnChannel {
-			spawnCoin(&jogo, 15*time.Second, coinRespawnChannel, monsterSpawnChannel)
-		}
-	}()
-
-	// Go routine para spawnar um monstro
-	// toda vez que uma moeda expirar
-	go func() {
-		for range monsterSpawnChannel {
-			spawnMonster(&jogo)
-		}
-	}()
-	// Go routine para spawnar um poder periodicamente
-	go func() {
-		<-time.After(1 * time.Minute)
-		powerSpawnChannel <- true
-
-		for range powerSpawnChannel {
-			spawnPower(&jogo, powerSpawnChannel)
-			<-time.After(1 * time.Minute)
-		}
-	}()
-
-	// Spawna a primeira moeda
-	coinRespawnChannel <- true
-
-	// Desenha o estado inicial do jogo
-	interfaceDesenharJogo(&jogo)
-
-	// Loop principal de entrada
-	for {
-		evento := interfaceLerEventoTeclado()
-		if continuar := personagemExecutarAcao(evento, &jogo, coinRespawnChannel, powerSpawnChannel); !continuar {
-			break
-		}
-
-		if jogo.Mapa[jogo.PosY][jogo.PosX].simbolo == Moeda.simbolo {
-			jogo.Mapa[jogo.PosY][jogo.PosX] = Vazio
-			jogo.StatusMsg = "Moeda coletada!"
-			coinRespawnChannel <- true // spawn da próxima moeda
-		}
-
-		interfaceDesenharJogo(&jogo)
+	/*
+		Ativa o servidor na porta e com o protocolo definido
+		pelo listener
+	*/
+	http.Serve(listener, nil)
+	if err != nil {
+		log.Fatal("Error serving: ", err)
 	}
 }
