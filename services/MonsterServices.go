@@ -131,8 +131,9 @@ func (service *MonsterService) FindMonsterByID(args *FindMonsterByIdArgs, reply 
 	return nil
 }
 
-// ListAllMonsters lists all monsters that are active
-func (service *MonsterService) ListAllMonsters(reply *[]models.Monster) error {
+type ListAllMonstersArgs struct{}
+
+func (service *MonsterService) ListAllMonsters(args *ListAllMonstersArgs, reply *[]models.Monster) error {
 	service.mu.RLock()
 	defer service.mu.RUnlock()
 

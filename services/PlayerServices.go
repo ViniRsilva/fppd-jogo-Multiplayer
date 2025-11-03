@@ -191,7 +191,6 @@ func (service *PlayerService) ListAllPlayers(_ *struct{}, reply *[]models.Player
 	for _, player := range service.allPlayers {
 		players = append(players, *player)
 	}
-
 	*reply = players
 	return nil
 }
