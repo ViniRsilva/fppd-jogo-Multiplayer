@@ -23,12 +23,6 @@ type DeleteCoinByPositionArgs struct {
 	PosY      int
 }
 
-type DeleteCoinByIDArgs struct {
-	PlayerID  int
-	RequestID int
-	CoinID    int
-}
-
 type CoinService struct {
 	mu                   sync.RWMutex
 	allCoins             map[int]*models.Coin
@@ -44,7 +38,7 @@ func NewCoinService() *CoinService {
 	}
 }
 
-// CreateCoin cria uma nova moeda no jogo
+// CreateCoin creates a new coin
 func (service *CoinService) CreateCoin(args *CreateCoinArgs, reply *models.Coin) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
@@ -68,7 +62,7 @@ func (service *CoinService) CreateCoin(args *CreateCoinArgs, reply *models.Coin)
 	return nil
 }
 
-// DeleteCoinByPosition encontra e deleta a primeira moeda em uma dada posição.
+// DeleteCoinByPosition deletes a coin based on its position
 func (service *CoinService) DeleteCoinByPosition(args *DeleteCoinByPositionArgs, res *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
@@ -97,40 +91,7 @@ func (service *CoinService) DeleteCoinByPosition(args *DeleteCoinByPositionArgs,
 	return nil
 }
 
-// DeleteCoinByID deleta uma moeda pelo seu ID, com proteção contra reexecução (não utilizado).
-func (service *CoinService) DeleteCoinByID(args *DeleteCoinByIDArgs, res *bool) error {
-	service.mu.Lock()
-	defer service.mu.Unlock()
-
-	lastID := service.lastProcessedRequest[args.PlayerID]
-	if args.RequestID > lastID {
-		_, found := service.allCoins[args.CoinID]
-		if !found {
-			return CoinNotFound
-		}
-		delete(service.allCoins, args.CoinID)
-		service.lastProcessedRequest[args.PlayerID] = args.RequestID
-	}
-
-	*res = true
-	return nil
-}
-
-// FindCoinByID devolve a moeda identificada pelo ID (não utilizado).
-func (service *CoinService) FindCoinByID(id int, reply *models.Coin) error {
-	service.mu.RLock()
-	defer service.mu.RUnlock()
-
-	coin, found := service.allCoins[id]
-	if !found {
-		return CoinNotFound
-	}
-
-	*reply = *coin
-	return nil
-}
-
-// ListAllCoins lista todas as moedas ativas no jogo.
+// ListAllCoins lists all coins (used to render the complete map)
 func (service *CoinService) ListAllCoins(_ *struct{}, reply *[]models.Coin) error {
 	service.mu.RLock()
 	defer service.mu.RUnlock()

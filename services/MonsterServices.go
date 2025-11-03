@@ -9,6 +9,7 @@ import (
 
 var MonsterNotFound = errors.New("monstro nao encontrado")
 
+type ListAllMonstersArgs struct{}
 type MonsterService struct {
 	mu               sync.RWMutex
 	allMonsters      map[int]*models.Monster
@@ -31,20 +32,9 @@ type CreateMonsterArgs struct {
 	Y         int
 }
 
-type DeleteMonsterByPositionArgs struct {
-	PlayerID  int
-	RequestID int
-	X         int
-	Y         int
-}
-
 type DeleteAllMonstersArgs struct {
 	PlayerID  int
 	RequestID int
-}
-
-type FindMonsterByIdArgs struct {
-	ID int
 }
 
 // CreateMonster creates a new monster
@@ -71,36 +61,6 @@ func (service *MonsterService) CreateMonster(args *CreateMonsterArgs, reply *mod
 	return nil
 }
 
-// DeleteMonsterByPosition deletes a monster by its position
-func (service *MonsterService) DeleteMonsterByPosition(args *DeleteMonsterByPositionArgs, reply *bool) error {
-	service.mu.Lock()
-	defer service.mu.Unlock()
-
-	lastRequestId := service.lastKnownRequest[args.PlayerID]
-
-	if args.RequestID > lastRequestId {
-		var foundMonsterID = -1
-		for id, monster := range service.allMonsters {
-			if monster.X == args.X && monster.Y == args.Y {
-				foundMonsterID = id
-				break
-			}
-		}
-
-		if foundMonsterID == -1 {
-			return MonsterNotFound
-		}
-
-		delete(service.allMonsters, foundMonsterID)
-		log.Printf("Deleted Monster: (%d,%d)", args.X, args.Y)
-
-		service.lastKnownRequest[args.PlayerID] = args.RequestID
-	}
-
-	*reply = true
-	return nil
-}
-
 // DeleteAllMonsters deletes all monsters (executed when player gets a power)
 func (service *MonsterService) DeleteAllMonsters(args *DeleteAllMonstersArgs, reply *bool) error {
 	service.mu.Lock()
@@ -117,22 +77,7 @@ func (service *MonsterService) DeleteAllMonsters(args *DeleteAllMonstersArgs, re
 	return nil
 }
 
-// FindMonsterByID finds a monster by ID (not being used)
-func (service *MonsterService) FindMonsterByID(args *FindMonsterByIdArgs, reply *models.Monster) error {
-	service.mu.RLock()
-	defer service.mu.RUnlock()
-
-	monster, found := service.allMonsters[args.ID]
-	if !found {
-		return MonsterNotFound
-	}
-
-	*reply = *monster
-	return nil
-}
-
-type ListAllMonstersArgs struct{}
-
+// ListAllMonsters returns all active monsters (used to render the complete map)
 func (service *MonsterService) ListAllMonsters(args *ListAllMonstersArgs, reply *[]models.Monster) error {
 	service.mu.RLock()
 	defer service.mu.RUnlock()

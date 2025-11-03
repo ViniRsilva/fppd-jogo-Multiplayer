@@ -36,12 +36,6 @@ type UpdateScoreArgs struct {
 	Delta     int
 }
 
-type SetBoostArgs struct {
-	ID        int
-	RequestID int
-	Active    bool
-}
-
 type PlayerService struct {
 	mu                   sync.RWMutex
 	allPlayers           map[int]*models.Player
@@ -57,7 +51,7 @@ func NewPlayerService() *PlayerService {
 	}
 }
 
-// CreatePlayer registra um novo jogador no serviço e retorna seus dados, incluindo o ID atribuído.
+// CreatePlayer creates a new player on the session
 func (service *PlayerService) CreatePlayer(args *CreatePlayerArgs, reply *models.Player) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
@@ -77,7 +71,7 @@ func (service *PlayerService) CreatePlayer(args *CreatePlayerArgs, reply *models
 	return nil
 }
 
-// DeletePlayer remove um jogador do mapa.
+// DeletePlayer removes a player from the session.
 func (service *PlayerService) DeletePlayer(args *DeletePlayerArgs, reply *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
@@ -96,7 +90,7 @@ func (service *PlayerService) DeletePlayer(args *DeletePlayerArgs, reply *bool) 
 	return nil
 }
 
-// MovePlayer altera a posição de um jogador.
+// MovePlayer update the player position.
 func (service *PlayerService) MovePlayer(args *MovePlayerArgs, reply *bool) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
@@ -118,7 +112,7 @@ func (service *PlayerService) MovePlayer(args *MovePlayerArgs, reply *bool) erro
 	return nil
 }
 
-// UpdateScore atualiza a pontuação do jogador.
+// UpdateScore update the player score.
 func (service *PlayerService) UpdateScore(args *UpdateScoreArgs, reply *models.Player) error {
 	service.mu.Lock()
 	defer service.mu.Unlock()
@@ -143,32 +137,7 @@ func (service *PlayerService) UpdateScore(args *UpdateScoreArgs, reply *models.P
 	return nil
 }
 
-// SetBoost ativa ou desativa o Boost de um jogador.
-func (service *PlayerService) SetBoost(args *SetBoostArgs, reply *models.Player) error {
-	service.mu.Lock()
-	defer service.mu.Unlock()
-
-	lastID := service.lastProcessedRequest[args.ID]
-	if args.RequestID > lastID {
-		player, found := service.allPlayers[args.ID]
-		if !found {
-			return PlayerNotFound
-		}
-		player.Boost = args.Active
-		service.lastProcessedRequest[args.ID] = args.RequestID
-		*reply = *player
-	} else {
-		player, found := service.allPlayers[args.ID]
-		if !found {
-			return PlayerNotFound
-		}
-		*reply = *player
-	}
-
-	return nil
-}
-
-// FindPlayerByID busca um jogador pelo seu ID.
+// FindPlayerByID finds a player by its ID.
 func (service *PlayerService) FindPlayerByID(args *FindPlayerByIdArgs, reply *models.Player) error {
 	service.mu.RLock()
 	defer service.mu.RUnlock()
@@ -182,7 +151,7 @@ func (service *PlayerService) FindPlayerByID(args *FindPlayerByIdArgs, reply *mo
 	return nil
 }
 
-// ListAllPlayers lista todos os jogadores ativos na sessão.
+// ListAllPlayers lists every active player in the session.
 func (service *PlayerService) ListAllPlayers(_ *struct{}, reply *[]models.Player) error {
 	service.mu.RLock()
 	defer service.mu.RUnlock()

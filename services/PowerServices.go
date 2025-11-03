@@ -67,7 +67,6 @@ func (service *PowerService) CreatePower(args *CreatePowerArgs, reply *bool) err
 	return nil
 }
 
-// DeletePowerByPosition deleta um poder.
 // DeleteAllPowers deleta TODOS os poderes do mapa.
 func (service *PowerService) DeleteAllPowers(args *DeleteAllPowersArgs, res *bool) error {
 	service.mu.Lock()
@@ -76,12 +75,10 @@ func (service *PowerService) DeleteAllPowers(args *DeleteAllPowersArgs, res *boo
 	lastID := service.lastProcessedRequest[args.PlayerID]
 
 	if args.RequestID > lastID {
-		// A maneira mais eficiente de limpar um mapa é criar um novo.
 		service.allPowers = make(map[int]*models.Power)
 
 		log.Printf("Player %d deletou todos os poderes.", args.PlayerID)
 
-		// Atualiza o registro para marcar esta requisição como processada.
 		service.lastProcessedRequest[args.PlayerID] = args.RequestID
 	}
 
